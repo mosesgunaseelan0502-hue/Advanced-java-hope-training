@@ -1,0 +1,5 @@
+class Solution {
+    public int countOdds(int l, int h) {
+        return ((h-l+1)+((h%2)&(l%2)))/2;
+    }
+}
