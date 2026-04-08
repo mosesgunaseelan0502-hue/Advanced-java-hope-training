@@ -1,0 +1,510 @@
+import java.util.*;
+
+//parent abstract class-person.
+
+abstract class Person {
+
+    protected int id;
+    protected String name;
+    protected String email;
+    protected String password;
+
+    public Person(int id,String name,String email,String password){
+        this.id=id;
+        this.name=name;
+        this.email=email;
+        this.password=password;
+    }
+
+    public boolean login(String email,String password){
+        return this.email.equals(email) && this.password.equals(password);
+    }
+
+    public String getName(){
+        return name;
+    }
+}
+
+//child class1-user.
+
+class User extends Person{
+
+    private List<Booking> history=new ArrayList<>();
+
+    public User(int id,String name,String email,String password){
+        super(id,name,email,password);
+    }
+
+    public void addBooking(Booking b){
+        history.add(b);
+    }
+
+    public void viewBookings(){
+
+        if(history.isEmpty()){
+            System.out.println("No bookings found.");
+            return;
+        }
+
+        for(Booking b:history){
+            b.display();
+        }
+    }
+}
+
+//child class2-admin.
+
+class Admin extends Person{
+
+    public Admin(int id,String name,String email,String password){
+        super(id,name,email,password);
+    }
+}
+
+
+
+class Seat{
+
+    private String seatNumber;
+    private boolean booked=false;
+
+    public Seat(String seatNumber){
+        this.seatNumber=seatNumber;
+    }
+
+    public boolean isAvailable(){
+        return !booked;
+    }
+
+    public void book(){
+        booked=true;
+    }
+
+    public String getSeatNumber(){
+        return seatNumber;
+    }
+}
+
+//class to get flight details and book flight
+
+class Flight{
+
+    private String id;
+    private String source;
+    private String destination;
+    private double price;
+
+    private Map<String,Seat> seats=new LinkedHashMap<>();
+
+    public Flight(String id,String source,String destination,double price,int seatCount){
+
+        this.id=id;
+        this.source=source;
+        this.destination=destination;
+        this.price=price;
+
+        for(int i=1;i<=seatCount;i++){
+            seats.put("S"+i,new Seat("S"+i));
+        }
+    }
+
+    public String getId(){ return id; }
+    public String getSource(){ return source; }
+    public String getDestination(){ return destination; }
+    public double getPrice(){ return price; }
+
+    public void display(){
+        System.out.println(id+" | "+source+" -> "+destination+" | Price ₹"+price);
+    }
+
+    public void showAvailableSeats(){
+
+        for(Seat s:seats.values()){
+            if(s.isAvailable())
+                System.out.print(s.getSeatNumber()+" ");
+        }
+
+        System.out.println();
+    }
+
+    public Seat reserveSeat(String seatNo){
+
+        Seat s=seats.get(seatNo);
+
+        if(s!=null && s.isAvailable()){
+            s.book();
+            return s;
+        }
+
+        return null;
+    }
+}
+
+//passenger details
+
+class Passenger{
+
+    private String name;
+    private int age;
+    private String seatNo;
+
+    public Passenger(String name,int age,String seatNo){
+        this.name=name;
+        this.age=age;
+        this.seatNo=seatNo;
+    }
+
+    public void display(){
+        System.out.println(name+" (Age:"+age+") Seat:"+seatNo);
+    }
+}
+
+//booking status
+class Booking{
+
+    private int bookingId;
+    private Flight flight;
+    private List<Passenger> passengers;
+
+    public Booking(int bookingId,Flight flight,List<Passenger> passengers){
+        this.bookingId=bookingId;
+        this.flight=flight;
+        this.passengers=passengers;
+    }
+
+    public int getId(){
+        return bookingId;
+    }
+
+    public void display(){
+
+        System.out.println("\nBooking ID: "+bookingId);
+        System.out.println("Flight: "+flight.getId()+" "+flight.getSource()+"->"+flight.getDestination());
+
+        for(Passenger p:passengers){
+            p.display();
+        }
+    }
+}
+
+//objects for the flight system
+class FlightSystem{
+
+    private List<User> users=new ArrayList<>();
+    private List<Flight> flights=new ArrayList<>();
+    private List<Booking> bookings=new ArrayList<>();
+
+    private Admin admin=new Admin(0,"Admin","admin","admin");
+
+    private int bookingCounter=1;
+
+    //user or admin registration
+
+    public void register(Scanner sc){
+
+        System.out.print("Name: ");
+        String name=sc.nextLine();
+
+        System.out.print("Email: ");
+        String email=sc.nextLine();
+
+        System.out.print("Password: ");
+        String pass=sc.nextLine();
+
+        users.add(new User(users.size()+1,name,email,pass));
+
+        System.out.println("Registration successful.");
+    }
+
+    //user login
+
+    public User loginUser(Scanner sc){
+
+        System.out.print("Email: ");
+        String email=sc.nextLine();
+
+        System.out.print("Password: ");
+        String pass=sc.nextLine();
+
+        for(User u:users){
+
+            if(u.login(email,pass)){
+                System.out.println("Login successful.");
+                return u;
+            }
+        }
+
+        System.out.println("Invalid credentials.");
+        return null;
+    }
+
+    //admin login
+
+    public boolean loginAdmin(Scanner sc){
+
+        System.out.print("Admin username: ");
+        String u=sc.nextLine();
+
+        System.out.print("Password: ");
+        String p=sc.nextLine();
+
+        if(admin.login(u,p)){
+            System.out.println("Admin login successful.");
+            return true;
+        }
+
+        System.out.println("Invalid admin login.");
+        return false;
+    }
+
+    //flight addition
+
+    public void addFlight(Scanner sc){
+
+        System.out.print("Flight ID: ");
+        String id=sc.nextLine();
+
+        System.out.print("Source: ");
+        String src=sc.nextLine();
+
+        System.out.print("Destination: ");
+        String dst=sc.nextLine();
+
+        System.out.print("Price: ");
+        double price=sc.nextDouble();
+
+        System.out.print("Seat count: ");
+        int seats=sc.nextInt();
+        sc.nextLine();
+
+        flights.add(new Flight(id,src,dst,price,seats));
+
+        System.out.println("Flight added successfully.");
+    }
+
+    //flight deletion
+
+    public void removeFlight(Scanner sc){
+
+        System.out.print("Enter Flight ID: ");
+        String id=sc.nextLine();
+
+        flights.removeIf(f->f.getId().equalsIgnoreCase(id));
+
+        System.out.println("Flight removed.");
+    }
+
+    //flights available list 
+
+    public void viewFlights(){
+
+        if(flights.isEmpty()){
+            System.out.println("No flights available.");
+            return;
+        }
+
+        for(Flight f:flights){
+            f.display();
+        }
+    }
+
+    //flights based on source and destination
+
+    public List<Flight> searchFlights(String src,String dst){
+
+        List<Flight> result=new ArrayList<>();
+
+        for(Flight f:flights){
+
+            if(f.getSource().equalsIgnoreCase(src)
+            && f.getDestination().equalsIgnoreCase(dst)){
+
+                result.add(f);
+            }
+        }
+
+        return result;
+    }
+
+    //to book flight
+
+    public void bookFlight(User user,Scanner sc){
+
+        System.out.print("Enter Source: ");
+        String src=sc.nextLine();
+
+        System.out.print("Enter Destination: ");
+        String dst=sc.nextLine();
+
+        List<Flight> results=searchFlights(src,dst);
+
+        if(results.isEmpty()){
+            System.out.println("No flights found.");
+            return;
+        }
+
+        for(int i=0;i<results.size();i++){
+
+            System.out.print((i+1)+". ");
+            results.get(i).display();
+        }
+
+        System.out.print("Select flight number: ");
+        int choice=sc.nextInt();
+        sc.nextLine();
+
+        Flight chosen=results.get(choice-1);
+
+        System.out.print("Number of passengers: ");
+        int n=sc.nextInt();
+        sc.nextLine();
+
+        List<Passenger> passengers=new ArrayList<>();
+
+        for(int i=1;i<=n;i++){
+
+            System.out.println("Passenger "+i);
+
+            System.out.print("Name: ");
+            String name=sc.nextLine();
+
+            System.out.print("Age: ");
+            int age=sc.nextInt();
+            sc.nextLine();
+
+            System.out.println("Available seats:");
+            chosen.showAvailableSeats();
+
+            System.out.print("Select seat: ");
+            String seat=sc.nextLine();
+
+            Seat s=chosen.reserveSeat(seat);
+
+            if(s==null){
+                System.out.println("Seat unavailable. Try again.");
+                i--;
+                continue;
+            }
+
+            passengers.add(new Passenger(name,age,seat));
+        }
+
+        Booking booking=new Booking(bookingCounter++,chosen,passengers);
+
+        bookings.add(booking);
+        user.addBooking(booking);
+
+        System.out.println("Booking successful!");
+        booking.display();
+    }
+
+    // cancel booked flight 
+
+    public void cancelBooking(Scanner sc){
+
+        System.out.print("Enter Booking ID: ");
+        int id=sc.nextInt();
+        sc.nextLine();
+
+        bookings.removeIf(b->b.getId()==id);
+
+        System.out.println("Booking cancelled.");
+    }
+}
+
+//main program
+
+public class Main{
+
+    public static void main(String[] args){
+
+        Scanner sc=new Scanner(System.in);
+
+        FlightSystem system=new FlightSystem();
+
+        while(true){
+
+            System.out.println("\n***Flight Booking System***");
+            System.out.println("1 Register");
+            System.out.println("2 User Login");
+            System.out.println("3 Admin Login");
+            System.out.println("4 Exit");
+
+            int choice=sc.nextInt();
+            sc.nextLine();
+
+            switch(choice){
+
+                case 1:
+                    system.register(sc);
+                    break;
+
+                case 2:
+
+                    User user=system.loginUser(sc);
+
+                    if(user==null) break;
+
+                    while(true){
+
+                        System.out.println("\n1 Book Flight");
+                        System.out.println("2 View Booking History");
+                        System.out.println("3 Cancel Booking");
+                        System.out.println("4 Logout");
+
+                        int ch=sc.nextInt();
+                        sc.nextLine();
+
+                        if(ch==1)
+                            system.bookFlight(user,sc);
+
+                        else if(ch==2)
+                            user.viewBookings();
+
+                        else if(ch==3)
+                            system.cancelBooking(sc);
+
+                        else
+                            break;
+                    }
+
+                    break;
+
+                case 3:
+
+                    if(system.loginAdmin(sc)){
+
+                        while(true){
+
+                            System.out.println("\nAdmin Menu");
+                            System.out.println("1 Add Flight");
+                            System.out.println("2 Remove Flight");
+                            System.out.println("3 View Flights");
+                            System.out.println("4 Logout");
+
+                            int ch=sc.nextInt();
+                            sc.nextLine();
+
+                            if(ch==1)
+                                system.addFlight(sc);
+
+                            else if(ch==2)
+                                system.removeFlight(sc);
+
+                            else if(ch==3)
+                                system.viewFlights();
+
+                            else
+                                break;
+                        }
+                    }
+
+                    break;
+
+                case 4:
+                    System.out.println("Exiting system.");
+                    return;
+            }
+        }
+    }
+}
